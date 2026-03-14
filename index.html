@@ -4,7 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arjen Apokalypsi</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* TÄSSÄ ON ULKOASU (CSS) */
+        body {
+            background: #1a1a2e;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            text-align: center;
+        }
+        .screen { padding: 20px; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        input { padding: 15px; border-radius: 10px; border: none; width: 80%; max-width: 300px; margin-bottom: 20px; font-size: 1rem; }
+        button { padding: 15px 30px; background: #e94560; color: white; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; }
+        
+        #deck-container { position: relative; width: 100%; height: 300px; margin-top: 50px; }
+        .card {
+            position: absolute; width: 80px; height: 120px;
+            background: linear-gradient(135deg, #4e085e, #1a0521);
+            border: 2px solid #ffd700; border-radius: 8px;
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer; left: 50%; top: 0; margin-left: -40px;
+        }
+
+        #result-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 100;
+            display: none; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: white; color: #333; padding: 30px; border-radius: 20px;
+            width: 85%; max-width: 400px;
+        }
+        #display-question { font-style: italic; color: #666; }
+        #card-extra { font-weight: bold; color: #e94560; border-top: 1px dashed #ccc; padding-top: 10px; }
+    </style>
 </head>
 <body>
 
@@ -16,21 +50,67 @@
     </div>
 
     <div id="table-screen" class="screen" style="display:none">
-        <p id="instruction">Valitse kortti, joka kantaa vastaustasi...</p>
+        <p>Kysymyksesi on kuultu. Valitse kortti...</p>
         <div id="deck-container"></div>
     </div>
 
-    <div id="result-overlay" style="display:none">
+    <div id="result-overlay">
         <div class="modal-content">
             <p id="display-question"></p>
-            <div id="selected-card-visual"></div>
             <h2 id="card-name"></h2>
             <p id="card-text"></p>
             <p id="card-extra"></p>
-            <button onclick="location.reload()">OTA UUSI KOHTALO</button>
+            <button onclick="location.reload()" style="background:#666">OTA UUSI KOHTALO</button>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // TÄSSÄ ON ÄLY (JAVASCRIPT)
+        const pakka = [
+            { n: "Verottaja", t: "Hän ei hymyile. Hän vain laskee mätkysi.", l: "Maksa pois, karkuun et pääse." },
+            { n: "Maanantai", t: "Kaikki on ylivoimaista. Sukkien laitto on olympiaurakka.", l: "Epäonnistumisen mahdollisuus on 110%." },
+            { n: "IKEA-reissu", t: "Säästit 50€, mutta menetit sielusi ja yhden ruuvin.", l: "Kotona odottaa palapeli helvetistä." },
+            { n: "Ruuhkavuodet", t: "Olet kuin sirkusartisti, mutta pallot on liekeissä ja olet unohtanut housut.", l: "Kukaan ei taputa." }
+        ];
+
+        let kayttajanKysymys = "";
+
+        function startShuffle() {
+            kayttajanKysymys = document.getElementById('user-question').value;
+            if (!kayttajanKysymys) kayttajanKysymys = "Mitä tulevaisuus tuo?";
+            
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('table-screen').style.display = 'flex';
+            
+            luoKortitPoydalle();
+        }
+
+        function luoKortitPoydalle() {
+            const container = document.getElementById('deck-container');
+            for (let i = 0; i < 20; i++) {
+                const card = document.createElement('div');
+                card.className = 'card';
+                container.appendChild(card);
+
+                // Viiveellä roiskaisu, jotta näyttää hienolta
+                setTimeout(() => {
+                    const x = Math.random() * 260 - 130; 
+                    const y = Math.random() * 260 - 130;
+                    const rot = Math.random() * 60 - 30;
+                    card.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
+                }, i * 30);
+
+                card.onclick = () => naytaTulos(pakka[Math.floor(Math.random() * pakka.length)]);
+            }
+        }
+
+        function naytaTulos(kortti) {
+            document.getElementById('display-question').innerText = `Kysyit: "${kayttajanKysymys}"`;
+            document.getElementById('card-name').innerText = kortti.n;
+            document.getElementById('card-text').innerText = kortti.t;
+            document.getElementById('card-extra').innerText = kortti.l;
+            document.getElementById('result-overlay').style.display = 'flex';
+        }
+    </script>
 </body>
 </html>
