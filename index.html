@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arjen Apokalypsi - Tarot</title>
+    <style>
+        :root { --primary: #ff4444; --bg: #f5f5f7; --card-bg: #ffffff; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; color: #333; }
+        header { padding: 40px 20px; text-align: center; }
+        h1 { margin: 0; color: var(--primary); font-size: 2.5rem; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .main-button { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; background: var(--primary); color: white; border: none; border-radius: 50px; box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3); transition: transform 0.2s; font-weight: bold; }
+        .main-button:active { transform: scale(0.95); }
+
+        #kortti-näkymä { margin-top: 30px; display: none; width: 90%; max-width: 400px; animation: fadeIn 0.5s; }
+        .kortti-kontti { background: var(--card-bg); border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding-bottom: 20px; }
+        .kuva-alue { width: 100%; height: 450px; background: #ddd; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .kuva-alue img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .teksti-alue { padding: 20px; text-align: center; }
+        h2 { margin: 0 0 15px 0; color: #111; font-size: 1.8rem; }
+        .tulkinta { line-height: 1.6; color: #555; font-size: 1.1rem; }
+        .loppukaneetti { margin-top: 20px; font-style: italic; color: var(--primary); border-top: 1px dashed #ddd; padding-top: 15px; font-weight: bold; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Arjen Apokalypsi</h1>
+    <p>Mitä tänään menee pieleen?</p>
+</header>
+
+<button class="main-button" onclick="nostaKortti()">NOSTA PÄIVÄN KORTTI</button>
+
+<div id="kortti-näkymä">
+    <div class="kortti-kontti">
+        <div class="kuva-alue" id="kuvaPaikka">
+            <span>KUVA PUUTTUU</span>
+        </div>
+        <div class="teksti-alue">
+            <h2 id="kortinNimi">Kortin Nimi</h2>
+            <div id="tulkinta" class="tulkinta">Tähän tulee kortin selitys...</div>
+            <div id="loppu" class="loppukaneetti">Ja loppukaneetti.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+const pakka = [
+    { n: "Lomallelähtijä", t: "Sokea usko siihen, että kaikki pakattu mahtuu autoon ja aurinko paistaa.", l: "Lopulta sataa kuitenkin.", k: "1.jpg" },
+    { n: "IT-tuki", t: "Kaikki on rikki. Kokeile sammuttaa ja käynnistää itsesi ja laitteesi.", l: "Vastaus on: 'Ei se mulla noin tee'.", k: "2.jpg" },
+    { n: "S-Etukortti", t: "Mystinen voima tietää ostoksesi. Se tarkkailee sinua maitohyllyllä.", l: "Kyllä ne tietävät, mitä teit viime kesänä.", k: "3.jpg" },
+    { n: "Lähiesimies", t: "Auktoriteetti, jolla on Excel-taulukko, mutta ei hajua todellisuudesta.", l: "Palaveri alkaa viiden minuutin kuluttua.", k: "4.jpg" },
+    { n: "Anopin vierailu", t: "Kaikki laitetaan uusiksi, verhot suoristetaan ja arvostelu alkaa.", l: "Hengitä syvään, se kestää vain viikonlopun.", k: "5.jpg" },
+    { n: "Taloyhtiön hallitus", t: "Perinteet, säännöt ja se, kuka saa käyttää pesutupaa tiistaisin.", l: "Sait juuri huomautuksen väärin lajitellusta jätteestä.", k: "6.jpg" },
+    { n: "Yhteinen Netflix-tili", t: "Suurin luottamuksen osoitus. Ja suurin syy riitaan.", l: "Kuka katsoi jakson etukäteen?", k: "7.jpg" },
+    { n: "VR / Länsimetro", t: "Liikettä on luvassa, mutta aikataulut ovat korkeamman kädessä.", l: "Korvaava bussi lähtee tunnin päästä.", k: "8.jpg" },
+    { n: "Kestokassi", t: "Se hetki, kun kieltäydyt ostamasta muovipussia ja kannat 20kg syliisi.", l: "Sisu voittaa fysiikan lait. Ehkä.", k: "9.jpg" },
+    { n: "Etätyöpäivä", t: "Verkkahousut, hämärä huone ja sosiaalisten kontaktien puute.", l: "Oletko muistanut käydä suihkussa tällä viikolla?", k: "10.jpg" },
+    { n: "Kela-pallo", t: "Elämäsi on käsittelyjonossa. Odotat vastausta, jota ei ehkä tule.", l: "Liitteet puuttuvat. Aina.", k: "11.jpg" },
+    { n: "Verottaja", t: "Hän ei hymyile, hän vain laskee. Tuntuu että happikin on verollista.", l: "Todennäköisesti saat mätkyjä.", k: "12.jpg" },
+    { n: "Latauspalkki (99%)", t: "Olet loppusuoralla, mutta maailma päätti pysähtyä.", l: "Se ei liiku siitä, vaikka tuijotat.", k: "13.jpg" },
+    { n: "Modeemin kuolema", t: "Internet loppuu, elämä sellaisena kuin sen tunnet päättyy.", l: "Kokeile lukea vaikka kirjaa. Kamalaa.", k: "14.jpg" },
+    { n: "Alkoholiton olut", t: "Yritys löytää tasapaino hauskanpidon ja aamun välillä.", l: "Maku on 'mielenkiintoinen'.", k: "15.jpg" },
+    { n: "Aletuote (-70%)", t: "Se on halpa, punainen ja täysin turha. Mutta kun se on halpa!", l: "Säästit viisikymppiä romuun.", k: "16.jpg" },
+    { n: "Lego jalkapohjassa", t: "Äkillinen, kivulias katastrofi, joka muuttaa maailmankuvasi.", l: "Kipu on hetkellistä, trauma ikuinen.", k: "17.jpg" },
+    { n: "Lämmin Lonkero", t: "Toivoa on, mutta se on väljähtynyttä ja väärän lämpöistä.", l: "Juo pois, ei se siitä kylmene.", k: "18.jpg" },
+    { n: "Univelka", t: "Silmäpussit ovat päivän asuste. Kaikki näyttää sumuiselta.", l: "Ota viides kuppi kahvia. Se auttaa. Ehkä.", k: "19.jpg" },
+    { n: "Terassipäivä", t: "Optimismi huipussaan, vaikka ulkona on +5 ja tuulee.", l: "Pipo päähän ja menoksi.", k: "20.jpg" },
+    { n: "Puhelu", t: "Puhelin soi, numero on tuntematon. Paniikki iskee.", l: "Jos se on tärkeää, ne laittaa viestin.", k: "21.jpg" },
+    { n: "IKEA-reissu", t: "Kulutit 200 euroa asioihin, joita et tarvinnut. Kotona odottaa palapeli.", l: "Aina jää yksi ruuvi yli.", k: "22.jpg" },
+    { n: "Idea pikkujouluissa", t: "Keksit maailman parhaan liikeidean kolmelta yöllä.", l: "Aamulla se ei enää naurata.", k: "23.jpg" },
+    { n: "Tinder-match", t: "Toivo herää, mutta pettymys on jo kulman takana.", l: "Onko tuo kuva varmasti hänestä?", k: "24.jpg" },
+    { n: "Särö näytössä", t: "Sydän särkyy, kun uusi puhelin kohtaa asfaltin.", l: "Sormet verillä selaamaan.", k: "25.jpg" },
+    { n: "Tyhjä tili", t: "Saldo on nolla, mutta nälkä sanoo toista.", l: "Palkkapäivään on liian monta yötä.", k: "26.jpg" },
+    { n: "Maanantai", t: "Kaikki on ylivoimaista. Sukkien laitto on olympiaurakka.", l: "Epäonnistumisen mahdollisuus on 110%.", k: "27.jpg" },
+    { n: "Ruuhka-aika", t: "Puolustat reviiriäsi bussissa tai Prisman hyllyillä.", l: "Älä katso ketään silmiin.", k: "28.jpg" },
+    { n: "Pikavippikeisari", t: "Näyttää rikkaalta, mutta todellisuus on korkojen peitossa.", l: "Korkoa korolle, itkua itkulle.", k: "29.jpg" },
+    { n: "Sauna", t: "Joudut selittelemään tai olet muuten kuumissa paikoissa.", l: "Hiki virtaa ilman kiuastakin.", k: "30.jpg" }
+];
+
+function nostaKortti() {
+    const arpa = pakka[Math.floor(Math.random() * pakka.length)];
+    
+    document.getElementById("kortinNimi").innerText = arpa.n;
+    document.getElementById("tulkinta").innerText = arpa.t;
+    document.getElementById("loppu").innerText = arpa.l;
+    
+    const kuvaElementti = document.getElementById("kuvaPaikka");
+    // Etsii kuvaa images-kansioista. Jos ei löydy, näyttää teksti-placeholderin.
+    const imgUrl = `images/${arpa.k}`;
+    kuvaElementti.innerHTML = `<img src="${imgUrl}" onerror="this.parentElement.innerHTML='<span>${arpa.n}</span>'" alt="${arpa.n}">`;
+    
+    document.getElementById("kortti-näkymä").style.display = "block";
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>
