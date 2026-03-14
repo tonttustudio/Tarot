@@ -1,0 +1,2 @@
+# Tarot
+Tarot-kortin arpoja
