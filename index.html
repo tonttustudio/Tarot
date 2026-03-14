@@ -3,190 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arjen Apokalypsi - Tarot</title>
-    <style>
-        :root { --primary: #ff4444; --bg: #1a1a1a; --card-w: 120px; --card-h: 180px; }
-        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; overflow-x: hidden; text-align: center; }
-        
-        header { padding: 20px; }
-        h1 { color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
-
-        /* Pakka-alue */
-        .deck-container { position: relative; height: 350px; margin-top: 20px; display: flex; justify-content: center; }
-
-        /* Yksittäinen kortti */
-        .card {
-            position: absolute;
-            width: var(--card-w);
-            height: var(--card-h);
-            cursor: pointer;
-            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-            transform-style: preserve-3d;
-            transform: translateY(0) rotate(0deg);
-        }
-
-        .card.fan-out { /* Kortit levitettynä */ }
-
-        .card-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-        }
-
-        /* Kortti kääntyy */
-        .card.flipped .card-inner { transform: rotateY(180deg); }
-
-        .card-front, .card-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #333;
-        }
-
-        /* Kortin selkäpuoli */
-        .card-back {
-            background: linear-gradient(45deg, #800, #200);
-            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px);
-        }
-
-        /* Kortin etupuoli */
-        .card-front {
-            background: white;
-            color: black;
-            transform: rotateY(180deg);
-            overflow: hidden;
-            flex-direction: column;
-        }
-
-        .card-front img { width: 100%; height: 100%; object-fit: cover; }
-        .card-front span { padding: 5px; font-weight: bold; font-size: 0.8rem; text-align: center; }
-
-        /* Valittu kortti nousee keskiöön */
-        .card.selected {
-            z-index: 1000 !important;
-            transform: translate(0, -50px) scale(2) rotate(0deg) !important;
-        }
-
-        /* Ohjeteksti ja nappi */
-        #controls { margin-bottom: 20px; }
-        button { padding: 12px 24px; font-size: 1rem; background: var(--primary); color: white; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; }
-        
-        #result-area {
-            display: none;
-            padding: 20px;
-            background: #fff;
-            color: #333;
-            width: 90%;
-            max-width: 400px;
-            margin: 20px auto;
-            border-radius: 15px;
-            animation: fadeIn 1s;
-        }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    </style>
+    <title>Arjen Apokalypsi</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>
-    <h1>Arjen Apokalypsi</h1>
-    <p id="status">Sekoita pakka aloittaaksesi...</p>
-</header>
-
-<div id="controls">
-    <button onclick="sekoitaJaJaa()">SEKOITA JA LEVITÄ</button>
-</div>
-
-<div class="deck-container" id="deck">
+    <div id="setup-screen" class="screen">
+        <h1>Arjen Apokalypsi</h1>
+        <p>Mitä haluat kysyä kohtalolta?</p>
+        <input type="text" id="user-question" placeholder="Esim. Miksi heräsin tänään?">
+        <button onclick="startShuffle()">LÄHETÄ KYSYMYS</button>
     </div>
 
-<div id="result-area">
-    <h2 id="res-nimi"></h2>
-    <p id="res-tulkinta"></p>
-    <p><strong id="res-loppu" style="color:var(--primary)"></strong></p>
-    <button onclick="location.reload()" style="background:#666">OTA UUSI PÄIVÄ</button>
-</div>
+    <div id="table-screen" class="screen" style="display:none">
+        <p id="instruction">Valitse kortti, joka kantaa vastaustasi...</p>
+        <div id="deck-container"></div>
+    </div>
 
-<script>
-const pakkaTiedot = [
-    { n: "Verottaja", t: "Tänään tuntuu siltä, että jokaisesta hengitetystä happilitrasta pitäisi maksaa alvia.", l: "Todennäköisesti saat mätkyjä.", k: "12.jpg" },
-    { n: "Maanantai", t: "Kaikki on ylivoimaista. Sukkien laitto on olympiaurakka.", l: "Epäonnistumisen mahdollisuus on 110%.", k: "27.jpg" },
-    { n: "IKEA-reissu", t: "Kulutit 200 euroa turhuuteen. Kotona odottaa palapeli.", l: "Aina jää yksi ruuvi yli.", k: "22.jpg" },
-    { n: "IT-tuki", t: "Kaikki on rikki. Sammuta ja käynnistä itsesi.", l: "Vastaus on: 'Ei se mulla noin tee'.", k: "2.jpg" },
-    { n: "S-Etukortti", t: "Mystinen voima tietää ostoksesi. Se tarkkailee sinua.", l: "Bonukset on jo tuhlattu.", k: "3.jpg" },
-    // Lisää loput 25 korttia tähän listaan samalla tavalla
-];
-
-// Luodaan 30 korttia (käytetään olemassa olevia tietoja ja kopioidaan niitä kokeilun vuoksi)
-const kortit = [];
-for(let i=0; i<30; i++) {
-    kortit.push(pakkaTiedot[i % pakkaTiedot.length]);
-}
-
-const deckElement = document.getElementById('deck');
-
-// Luodaan kortit pinoon
-kortit.forEach((data, index) => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.zIndex = index;
-    card.innerHTML = `
-        <div class="card-inner">
-            <div class="card-back"></div>
-            <div class="card-front">
-                <img src="images/${data.k}" onerror="this.style.display='none'">
-                <span>${data.n}</span>
-            </div>
+    <div id="result-overlay" style="display:none">
+        <div class="modal-content">
+            <p id="display-question"></p>
+            <div id="selected-card-visual"></div>
+            <h2 id="card-name"></h2>
+            <p id="card-text"></p>
+            <p id="card-extra"></p>
+            <button onclick="location.reload()">OTA UUSI KOHTALO</button>
         </div>
-    `;
-    card.onclick = () => valitseKortti(card, data);
-    deckElement.appendChild(card);
-});
+    </div>
 
-function sekoitaJaJaa() {
-    const allCards = document.querySelectorAll('.card');
-    allCards.forEach((card, i) => {
-        const angle = (i - 15) * 4; // Viuhka-kulma
-        const x = (i - 15) * 10;   // Levitä sivusuunnassa
-        card.style.transform = `translateX(${x}px) rotate(${angle}deg)`;
-    });
-    document.getElementById('status').innerText = "Valitse kohtalosi viuhkasta...";
-    document.querySelector('#controls button').style.display = 'none';
-}
-
-function valitseKortti(el, data) {
-    if(el.classList.contains('flipped')) return;
-
-    // Poistetaan muista kortteja ja himmennetään
-    document.querySelectorAll('.card').forEach(c => {
-        if(c !== el) c.style.opacity = "0.2";
-    });
-
-    el.classList.add('selected');
-    
-    setTimeout(() => {
-        el.classList.add('flipped');
-        naytaTulkinta(data);
-    }, 600);
-}
-
-function naytaTulkinta(data) {
-    document.getElementById('res-nimi').innerText = data.n;
-    document.getElementById('res-tulkinta').innerText = data.t;
-    document.getElementById('res-loppu').innerText = data.l;
-    setTimeout(() => {
-        document.getElementById('result-area').style.display = 'block';
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }, 800);
-}
-</script>
-
+    <script src="script.js"></script>
 </body>
 </html>
